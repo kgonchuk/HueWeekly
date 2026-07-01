@@ -1,0 +1,183 @@
+
+import React, { useState } from "react";
+import { StyleSheet, Text, View, SafeAreaView, Image, TouchableOpacity } from "react-native";
+import { useDispatch, useSelector } from "react-redux";
+import { Feather } from "@expo/vector-icons";
+import { generateWeeklyColor } from "../helpers/colorGenerator";
+import { LinearGradient } from "expo-linear-gradient";
+import DeleteBtn from "../assets/images/add.png";
+import * as ImagePicker from "expo-image-picker";
+import { updateAvatar } from "../redux/auth/authOperation";
+
+export const ProfileScreen = () => {
+  const dispatch = useDispatch();
+  const user = useSelector((state) => state.auth?.user);
+  const [avatar, setAvatar] = useState(null);
+
+  const baseUrl = "http://192.168.0.131:5001";
+  const todayHsl = user ? generateWeeklyColor(user.id, new Date()) : "hsl(25, 100%, 50%)";
+  const darkerHsl = todayHsl.replace(/[\d.]%\)$/, (match) => {
+    const currentLightness = parseFloat(match);
+    return `${Math.max(currentLightness - 15, 30)}%)`; 
+  });
+
+  const todayGradient = [todayHsl, darkerHsl];
+
+  const displayAvatar = avatar
+    ? avatar
+    : user?.avatarUrl
+      ? user.avatarUrl.startsWith("http")
+        ? user.avatarUrl 
+        : `${baseUrl.replace(/\/$/, "")}/${user.avatarUrl.replace(/^\//, "")}`
+      : null;
+
+  const uploadPhoto = async () => {
+    try {
+      const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+      if (status === "granted") {
+        const result = await ImagePicker.launchImageLibraryAsync({
+          mediaTypes: ImagePicker.MediaTypeOptions.Images, 
+          allowsEditing: true,
+          aspect: [1, 1], 
+          quality: 1,
+        });
+        if (!result.canceled) {
+          const uri = result.assets[0].uri;
+          setAvatar(uri);
+          dispatch(updateAvatar(uri));
+        }
+      }
+    } catch (error) {
+      console.log("error", error.message);
+    }
+  };
+
+  return (
+    <SafeAreaView style={styles.container}>
+      <View style={styles.heroContainer}>
+        <View style={styles.flexRow}>
+
+          <View style={styles.avatarWrapper}>
+
+            <LinearGradient
+              colors={todayGradient}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 1 }}
+              style={styles.gradientBorder}
+            >
+              <View style={styles.innerSpacing}>
+                {displayAvatar ? (
+                  <Image source={{ uri: displayAvatar }} style={styles.avatarImage} />
+                ) : (
+                  <View style={[styles.avatarImage, styles.userPhotoPlaceholder]} />
+                )}
+              </View>
+            </LinearGradient>
+            
+            <TouchableOpacity 
+              style={[styles.badge, { backgroundColor: todayHsl }]} 
+              onPress={uploadPhoto}
+              activeOpacity={0.8}
+            >
+              {displayAvatar ? (
+                <Image source={DeleteBtn} style={styles.deleteplus} />
+              ) : (
+                <Feather name="plus" size={14} color="#FFFFFF" />
+              )}
+            </TouchableOpacity>
+            
+          </View>
+
+          <View style={styles.contentWrapper}>
+            <Text style={styles.usernameText}>
+              {user?.displayname || "Aurora Chen"} 
+            </Text>
+            <Text style={styles.emailText}>{user?.email || "No email provided"}</Text>
+          </View>
+
+        </View>
+      </View>
+    </SafeAreaView>
+  );
+};
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: '#FFFFFF',
+  },
+  heroContainer: {
+    paddingHorizontal: 20, 
+    paddingTop: 12,        
+    paddingBottom: 20,    
+    marginTop: 60, 
+  },
+  flexRow: {
+    flexDirection: 'row',  
+    alignItems: 'center',
+  },
+  avatarWrapper: {
+    position: 'relative',
+    width: 88,
+    height: 88,
+    flexShrink: 0,        
+  },
+  gradientBorder: {
+    width: 88,
+    height: 88,
+    borderRadius: 44,    
+    padding: 3,           
+  },
+  innerSpacing: {
+    width: '100%',
+    height: '100%',
+    borderRadius: 41,
+    backgroundColor: '#FFFFFF', 
+    padding: 2.5,        
+  },
+  avatarImage: {
+    width: '100%',
+    height: '100%',
+    borderRadius: 38,    
+    backgroundColor: '#E5E7EB', 
+  },
+  userPhotoPlaceholder: {
+    backgroundColor: '#F3F4F6', // Сірий фон якщо немає фото
+  },
+  badge: {
+    position: 'absolute',
+    bottom: 0,            
+    right: 0,             
+    width: 26, // Трохи збільшив, щоб зручніше було тапати пальцем
+    height: 26,
+    borderRadius: 13,
+    borderWidth: 2.5,     
+    borderColor: '#FFFFFF', 
+    alignItems: 'center',
+    justifyContent: 'center',
+    elevation: 3, // Тінь для Android
+    shadowColor: '#000', // Тінь для iOS
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.2,
+    shadowRadius: 1.41,
+  },
+  deleteplus: {
+    width: '100%',
+    height: '100%',
+    resizeMode: 'contain',
+  },
+  contentWrapper: {
+    flex: 1,
+    marginLeft: 20,       
+  },
+  usernameText: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: '#171614',
+    marginBottom: 4,
+  },
+  emailText: {
+    fontSize: 14,
+    color: '#6B7280',
+  }
+});

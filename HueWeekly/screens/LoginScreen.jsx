@@ -23,6 +23,7 @@ export const LoginScreen = () => {
             .unwrap()
             .then(() => {
               Alert.alert("Успіх");
+              router.push('/posts')
             })
             .catch((error) => {
               Alert.alert("Помилка", typeof error === "string" ? error : "Щось пішло не так");

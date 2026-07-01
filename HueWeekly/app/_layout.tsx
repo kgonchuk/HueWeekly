@@ -12,13 +12,13 @@ export default function RootLayout() {
     "Roboto-Bold": require("../assets/fonts/Roboto-Bold.ttf"),
     "Roboto-Medium": require("../assets/fonts/Roboto-Medium.ttf"),
   });
-  if (!fontsLoaded) {
-    return (
-      <View style={{ flex: 1, justifyContent: "center", alignItems: "center", backgroundColor: "#fff" }}>
-        <ActivityIndicator size="large" color="#9333EA" />
-      </View>
-    );
-  }
+  // if (!fontsLoaded) {
+  //   return (
+  //     <View style={{ flex: 1, justifyContent: "center", alignItems: "center", backgroundColor: "#fff" }}>
+  //       <ActivityIndicator size="large" color="#9333EA" />
+  //     </View>
+  //   );
+  // }
 
   return (
     <Provider store={store}>

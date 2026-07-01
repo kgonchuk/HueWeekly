@@ -8,12 +8,15 @@ import {
 } from "./authOperation";
 
 const initialState = {
-  user: { displayname: null, email: null,},
-  accessToken: null,
-  refreshToken: null,
-  isLoading: false,
-  isLoggedIn: false,
-  isRefreshing: false,
+  // user: { displayname: null, email: null,avatarUrl:null},
+  // accessToken: null,
+  // refreshToken: null,
+  // isLoading: false,
+  // isLoggedIn: false,
+  // isRefreshing: false,
+  user: { id: "test-id", displayname: "Developer Mode", email: "aurora.chen@example.com", avatarUrl :"https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=180&h=180&fit=crop&auto=format" },
+  token: "fake-development-token",
+  isLoggedIn: true,
 };
 
 const authSlice = createSlice({

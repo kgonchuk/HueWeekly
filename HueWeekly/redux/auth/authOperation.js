@@ -54,7 +54,6 @@ export const login = createAsyncThunk(
 export const logout = createAsyncThunk("auth/logout", async (_, thunkAPI) => {
   try {
     const token = thunkAPI.getState().auth?.accessToken;
-    //  Якщо токена немає, ми не можемо надіслати запит на вихід.
     if (!token) {
       clearAuthHeader();
       await removeToken("accessToken");
