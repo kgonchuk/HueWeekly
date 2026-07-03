@@ -10,11 +10,16 @@ import {
   SafeAreaView,
   Animated,
   Pressable,
+  Keyboard,
+  TouchableWithoutFeedback,
+  Alert,
 } from "react-native";
 import { Ionicons, Feather } from "@expo/vector-icons";
 import * as ImagePicker from "expo-image-picker";
 import { router } from "expo-router";
 import * as Location from "expo-location";
+import { useDispatch, useSelector } from "react-redux";
+import { createPost } from "../redux/post/postOperation";
 
 const COLOR_OF_THE_DAY = {
   hex: "#C8541A",
@@ -22,7 +27,6 @@ const COLOR_OF_THE_DAY = {
   label: "Today's Color",
 };
 
-// 🌟 Кастомний мобільний Toggle за допомогою Animated API
 function CustomToggle({ checked, onChange }) {
   const animatedValue = useRef(new Animated.Value(checked ? 1 : 0)).current;
 
@@ -54,12 +58,15 @@ function CustomToggle({ checked, onChange }) {
 }
 
 export default function CreateScreen() {
-  const [imagePreview, setImagePreview] = useState(null);
-  const [caption, setCaption] = useState("");
+  const dispatch = useDispatch();
+  const [image, setImage] = useState(null);
+  const [title, setTitle] = useState("");
   const [location, setLocation] = useState("");
   const [isPublic, setIsPublic] = useState(true);
    const [place, setPlace] = useState("");
 const [coords, setCoords] = useState({ latitude: 0, longitude: 0 });
+const token = useSelector((state) => state.auth.accessToken);
+
 
 
   async function pickImage() {
@@ -75,13 +82,12 @@ const [coords, setCoords] = useState({ latitude: 0, longitude: 0 });
       quality: 0.8,
     });
     if (!result.canceled) {
-      setImagePreview(result.assets[0].uri);
+      setImage(result.assets[0].uri);
     }
   }
 
 const getLocation = async (placeName) => {
     try {
-      // А. Якщо користувач вже написав назву міста вручну
       if (placeName && placeName.trim() !== "") {
         const geoResult = await Location.geocodeAsync(placeName);
         if (geoResult.length > 0) {
@@ -94,24 +100,17 @@ const getLocation = async (placeName) => {
           return;
         }
       }
-
-      // Б. Автоматичний режим по GPS
       let { status } = await Location.requestForegroundPermissionsAsync();
       if (status !== "granted") {
         alert("Доступ до геолокації відхилено!");
         return;
       }
-
       const locationResult = await Location.getCurrentPositionAsync({});
       const currentCoords = {
         latitude: locationResult.coords.latitude,
         longitude: locationResult.coords.longitude,
       };
-      
-      // Зберігаємо координати
       setCoords(currentCoords);
-
-      // Отримуємо читабельну назву з координат (Reverse Geocoding)
       const addr = await Location.reverseGeocodeAsync(currentCoords);
       if (addr.length > 0) {
         const newPlaceName = `${addr[0].city || addr[0].region || ""}, ${addr[0].country || ""}`;
@@ -123,15 +122,30 @@ const getLocation = async (placeName) => {
     }
   };
 
-  function handlePublish() {
-    console.log({ imagePreview, caption, location, isPublic });
-    // Тут буде логіка відправки на ваш бекенд Mongoose
+  const handlePublish = async () => {
+    if(!image){
+      Alert.alert("Будь ласка, додайте фото перед публікацією.");
+      return;
+    }
+    const postData = {
+      photo: image,
+      title: title,
+      place: place,
+      latitude: coords.latitude,
+      longitude: coords.longitude,
+      token: token,
+    };
+    dispatch(createPost(postData)); 
+    Alert.alert("Пост успішно створено!");
+    setImage(null);
+    setTitle("");
+    setPlace("");
+    setCoords({ latitude: 0, longitude: 0 });
     router.push("/posts");
-  }
-
-
+  };
 
   return (
+      <TouchableWithoutFeedback onPress={Keyboard.dismiss} accessible={false}>
     <SafeAreaView style={styles.safeArea}>
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollContent}>
     
@@ -147,10 +161,10 @@ const getLocation = async (placeName) => {
 
         {/* Media Container */}
         <View style={styles.mediaContainer}>
-          {imagePreview ? (
+          {image ? (
             <View style={styles.imagePreviewWrapper}>
-              <Image source={{ uri: imagePreview }} style={styles.previewImage} />
-              <TouchableOpacity style={styles.removeButton} onPress={() => setImagePreview(null)}>
+              <Image source={{ uri: image }} style={styles.previewImage} />
+              <TouchableOpacity style={styles.removeButton} onPress={() => setImage(null)}>
                 <Ionicons name="close" size={16} color="white" />
               </TouchableOpacity>
             </View>
@@ -167,9 +181,9 @@ const getLocation = async (placeName) => {
           )}
 
         </View>
-  {imagePreview && (
+  {image && (
           <TouchableOpacity onPress={() => {
-    setImagePreview(null);
+    setImage(null);
 
   }}>
             <Text style={{ color: "red", marginTop: 8 }}>Видалити фото</Text>
@@ -179,16 +193,16 @@ const getLocation = async (placeName) => {
         {/* Caption Input */}
         <View style={styles.inputSection}>
           <TextInput
-            value={caption}
-            onChangeText={setCaption}
-            placeholder="Write a caption for your color day..."
+            value={title}
+            onChangeText={setTitle}
+            placeholder="Write a title for your color day..."
             placeholderTextColor="#8a8680"
             multiline
             maxLength={280}
             style={styles.captionInput}
           />
           <View style={styles.charCounterContainer}>
-            <Text style={styles.charCounterText}>{caption.length} / 280</Text>
+            <Text style={styles.charCounterText}>{title.length} / 280</Text>
           </View>
         </View>
 
@@ -214,6 +228,7 @@ const getLocation = async (placeName) => {
 
       </ScrollView>
     </SafeAreaView>
+    </TouchableWithoutFeedback>
   );
 }
 

@@ -8,15 +8,12 @@ import {
 } from "./authOperation";
 
 const initialState = {
-  // user: { displayname: null, email: null,avatarUrl:null},
-  // accessToken: null,
-  // refreshToken: null,
-  // isLoading: false,
-  // isLoggedIn: false,
-  // isRefreshing: false,
-  user: { id: "test-id", displayname: "Developer Mode", email: "aurora.chen@example.com", avatarUrl :"https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=180&h=180&fit=crop&auto=format" },
-  token: "fake-development-token",
-  isLoggedIn: true,
+  user: { displayname: null, email: null,avatarUrl:null},
+  accessToken: null,
+  refreshToken: null,
+  isLoading: false,
+  isLoggedIn: false,
+  isRefreshing: false,
 };
 
 const authSlice = createSlice({
@@ -44,10 +41,15 @@ const authSlice = createSlice({
         state.error = null;
       })
       .addCase(login.fulfilled, (state, action) => {
-        state.isLoading = false;
-        state.user = action.payload.user;
-        state.accessToken = action.payload.accessToken;
-        state.isLoggedIn = true;
+       const userData = action.payload.user || action.payload;
+  state.user = {
+    displayname: userData.displayname,
+    email: userData.email,
+    avatarUrl: userData.avatarUrl, 
+    id: userData.id || userData._id,
+  };
+  state.accessToken = action.payload.accessToken;
+  state.isLoggedIn = true;
       })
       .addCase(login.rejected, (state, action) => {
         state.isLoading = false;
@@ -75,8 +77,16 @@ const authSlice = createSlice({
         state.isRefreshing = false;
       })
       .addCase(updateAvatar.fulfilled, (state, action) => {
-        state.user.avatar = action.payload; 
-      });
+if (!state.user) state.user = {};
+  const cleanUrl = action.payload?.avatarUrl || action.payload?.avatar || action.payload;
+
+  if (typeof cleanUrl === 'string') {
+    state.user.avatarUrl = cleanUrl;
+  } else if (cleanUrl && typeof cleanUrl === 'object') {
+    state.user.avatarUrl = cleanUrl.avatarUrl || cleanUrl.url;
+  }
+      })
+  
   },
 });
 

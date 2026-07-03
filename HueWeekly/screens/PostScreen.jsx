@@ -1,56 +1,79 @@
-import React, { useState } from 'react';
-import { StyleSheet, View, Text, FlatList, SafeAreaView, TouchableOpacity } from 'react-native';
-import { useSelector } from 'react-redux';
+import React, { useEffect, useState } from 'react';
+import { StyleSheet, View, Text, FlatList, SafeAreaView, TouchableOpacity, Image } from 'react-native';
+import { useDispatch, useSelector } from 'react-redux';
 import { WeeklyColorView } from '../components/WeeklyColorView'; 
+import { selectAllPosts } from '../redux/post/postSelector';
+import { fetchPosts } from '../redux/post/postOperation';
 
 export const PostScreen = () => {
-  const userId = useSelector((state) => state.auth?.userId) || "guest_user";
-  const [posts, setPosts] = useState([
-    { id: '1', title: 'Мій перший кольоровий пост', location: 'Київ, Україна', likes: 12 },
-    { id: '2', title: 'Прогулянка в парку', location: 'Львів, Україна', likes: 24 },
-  ]);
+   const dispatch = useDispatch();
+  const user = useSelector((state) => state.auth.user);
+  const baseUrl= "http://192.168.0.108:5001";
+ const avatarUrl = user.avatarUrl
+   const token = useSelector((state) => state.auth.accessToken);
+  const allPosts = useSelector(selectAllPosts)
+
+  useEffect(()=>{
+    dispatch(fetchPosts(token))// Тут можна додати логіку для завантаження постів, якщо потрібно
+  }, [dispatch, token])
 
   return (
-    <SafeAreaView style={styles.safeArea}>
-      <View style={styles.container}>
-        <FlatList
-          data={posts}
-          keyExtractor={(item) => item.id}
-          
-          ListHeaderComponent={() => (
-            <View style={styles.headerComponentWrapper}>
-              <WeeklyColorView userId={userId} />
-              <Text style={styles.sectionTitle}>Recent Stories</Text>
-            </View>
-          )}
-
-          // Рендеринг кожного окремого поста
-          renderItem={({ item }) => (
-            <View style={styles.postCard}>
-              <Text style={styles.postTitle}>{item.title}</Text>
-              <View style={styles.postFooter}>
-                <Text style={styles.postLocation}>📍 {item.location}</Text>
-                <Text style={styles.postLikes}>❤️ {item.likes}</Text>
-              </View>
-            </View>
-          )}
-
-          // Якщо постів немає взагалі
-          ListEmptyComponent={() => (
-            <View style={styles.emptyContainer}>
-              <Text style={styles.emptyText}>No posts yet. Share your first color day!</Text>
-            </View>
-          )}
-          
-          contentContainerStyle={styles.listContent}
-        />
-
+   
+console.log("=== Всі пости ===", allPosts),
+console.log("=== Аватар користувача ===", avatarUrl),
+    <View style={styles.container}>
+      <FlatList
+  data={allPosts}
+  keyExtractor={(item) => item._id}
+  contentContainerStyle={{ paddingBottom: 20 }} 
+  
+  ListHeaderComponent={
+    <View style={styles.headerContainer}>
+      <View style={styles.userContainer}>
+        <Image source={{ uri: avatarUrl }} style={styles.userPhoto} />
+        <View>
+          <Text style={styles.userName}>{user.displayname}</Text>
+          <Text style={styles.userEmail}>{user.email}</Text>
+        </View>
       </View>
-    </SafeAreaView>
+    </View>
+  }
+
+ renderItem={({ item }) => {
+    return (
+      <>
+        <PostItem post={item} />
+      </>
+    );
+  }}
+/>
+
+    </View>
   );
 };
 
 const styles = StyleSheet.create({
+     headerContainer: {
+    marginBottom: 32,
+  },
+  userContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+  },
+   userPhoto: {
+    width: 60,
+    height: 60,
+    borderRadius: 16,
+  },
+  userName: {
+    fontSize: 13,
+    fontWeight: 700,
+  },
+  userEmail: {
+    fontSize: 11,
+    fontWeight: 400,
+  },
   safeArea: {
     flex: 1,
     backgroundColor: '#FFFFFF',

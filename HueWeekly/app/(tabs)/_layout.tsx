@@ -3,7 +3,7 @@ import { router, Tabs } from "expo-router";
 
 import { CustomBottomNav } from "../../components/CustomBottomNav"; 
 import { TouchableOpacity, View } from "react-native";
-import { Ionicons, Feather } from "@expo/vector-icons"; // Використовуємо один набір іконок для стабільності
+import { Ionicons, Feather } from "@expo/vector-icons"; 
 
 import { logout } from "../../redux/auth/authOperation";
 import { useAppDispatch } from "../../redux/store";

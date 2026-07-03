@@ -1,6 +1,6 @@
 
 import React, { useState } from "react";
-import { StyleSheet, Text, View, SafeAreaView, Image, TouchableOpacity } from "react-native";
+import { StyleSheet, Text, View, SafeAreaView, Image, TouchableOpacity, Keyboard, TouchableWithoutFeedback, FlatList } from "react-native";
 import { useDispatch, useSelector } from "react-redux";
 import { Feather } from "@expo/vector-icons";
 import { generateWeeklyColor } from "../helpers/colorGenerator";
@@ -8,14 +8,16 @@ import { LinearGradient } from "expo-linear-gradient";
 import DeleteBtn from "../assets/images/add.png";
 import * as ImagePicker from "expo-image-picker";
 import { updateAvatar } from "../redux/auth/authOperation";
+import PostItem from '../components/PostItem';
+import { selectPostsByAuthor } from "../redux/post/postSelector";
 
 export const ProfileScreen = () => {
   const dispatch = useDispatch();
   const user = useSelector((state) => state.auth?.user);
   const [avatar, setAvatar] = useState(null);
 
-  const baseUrl = "http://192.168.0.131:5001";
-  const todayHsl = user ? generateWeeklyColor(user.id, new Date()) : "hsl(25, 100%, 50%)";
+  const baseUrl = "http://192.168.0.108:5001";
+  const todayHsl = user ? generateWeeklyColor(user._id || user.id, new Date()) : "hsl(25, 100%, 50%)";
   const darkerHsl = todayHsl.replace(/[\d.]%\)$/, (match) => {
     const currentLightness = parseFloat(match);
     return `${Math.max(currentLightness - 15, 30)}%)`; 
@@ -23,20 +25,22 @@ export const ProfileScreen = () => {
 
   const todayGradient = [todayHsl, darkerHsl];
 
-  const displayAvatar = avatar
-    ? avatar
-    : user?.avatarUrl
-      ? user.avatarUrl.startsWith("http")
-        ? user.avatarUrl 
-        : `${baseUrl.replace(/\/$/, "")}/${user.avatarUrl.replace(/^\//, "")}`
-      : null;
+  const safeAvatarUrl = typeof user?.avatarUrl === 'string' ? user.avatarUrl : null;
 
+const displayAvatar = avatar
+  ? avatar
+  : safeAvatarUrl
+    ? safeAvatarUrl.startsWith("http")
+      ? safeAvatarUrl 
+      : `${baseUrl.replace(/\/$/, "")}/${safeAvatarUrl.replace(/^\//, "")}`
+    : null;
+    
   const uploadPhoto = async () => {
     try {
       const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
       if (status === "granted") {
         const result = await ImagePicker.launchImageLibraryAsync({
-          mediaTypes: ImagePicker.MediaTypeOptions.Images, 
+          mediaTypes: ['images'], 
           allowsEditing: true,
           aspect: [1, 1], 
           quality: 1,
@@ -52,13 +56,18 @@ export const ProfileScreen = () => {
     }
   };
 
+  const myPosts = useSelector((state) => selectPostsByAuthor(state, user._id || user.id));
+
   return (
+    <TouchableWithoutFeedback onPress={Keyboard.dismiss} accessible={false}>
     <SafeAreaView style={styles.container}>
-      <View style={styles.heroContainer}>
+      <FlatList
+       data={myPosts}
+       keyExtractor={(item) => item._id || item.id}
+        ListHeaderComponent={() => (
+           <View style={styles.heroContainer}>
         <View style={styles.flexRow}>
-
           <View style={styles.avatarWrapper}>
-
             <LinearGradient
               colors={todayGradient}
               start={{ x: 0, y: 0 }}
@@ -73,7 +82,6 @@ export const ProfileScreen = () => {
                 )}
               </View>
             </LinearGradient>
-            
             <TouchableOpacity 
               style={[styles.badge, { backgroundColor: todayHsl }]} 
               onPress={uploadPhoto}
@@ -85,9 +93,7 @@ export const ProfileScreen = () => {
                 <Feather name="plus" size={14} color="#FFFFFF" />
               )}
             </TouchableOpacity>
-            
           </View>
-
           <View style={styles.contentWrapper}>
             <Text style={styles.usernameText}>
               {user?.displayname || "Aurora Chen"} 
@@ -96,8 +102,16 @@ export const ProfileScreen = () => {
           </View>
 
         </View>
-      </View>
+      </View> 
+        )}
+        renderItem={({ item }) => (
+          <View style={styles.postItem}>
+            <PostItem post={item}/>
+          </View>
+        )}
+      />
     </SafeAreaView>
+    </TouchableWithoutFeedback>
   );
 };
 

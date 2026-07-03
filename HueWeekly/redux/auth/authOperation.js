@@ -2,6 +2,7 @@ import { createAsyncThunk } from "@reduxjs/toolkit";
 import axios from "axios";
 
 import { getToken, removeToken, saveToken } from "../../servises/storage";
+import { Platform } from "react-native";
 
 export const setAuthHeader = (token) => {
   axios.defaults.headers.common.Authorization = `Bearer ${token}`;
@@ -13,7 +14,7 @@ export const clearAuthHeader = () => {
   return {};
 };
 
-axios.defaults.baseURL = "http://192.168.0.131:5001";
+axios.defaults.baseURL = "http://192.168.0.108:5001";
 
 export const register = createAsyncThunk(
   "auth/register",
@@ -100,19 +101,34 @@ export const refreshUser = createAsyncThunk(
 
 export const updateAvatar = createAsyncThunk(
   "auth/updateAvatar",
-  async (fileUri, { rejectWithValue }) => {
+  async (fileUri, { getState, rejectWithValue }) => {
     try {
+      const token = getState().auth.accessToken;
       const formData = new FormData();
+
+      const cleanedUri = Platform.OS === 'ios' ? fileUri.replace('file://', '') : fileUri;
+      const filename = fileUri.split('/').pop() || 'avatar.jpg';
+      const match = /\.(\w+)$/.exec(filename);
+      const type = match ? `image/${match[1]}` : `image/jpeg`;
+
       formData.append("avatar", {
-        uri: fileUri,
-        name: "avatar.jpg",
-        type: "image/jpeg",
+        uri: Platform.OS === 'ios' ? fileUri : cleanedUri,
+        name: filename,
+        type: type,
       });
 
-      const { data } = await axios.patch("/api/auth/avatar", formData);
-      return data.avatar;
+      console.log("=== Відправка аватара на бекенд ===", { filename, type, fileUri });
+
+    const { data } = await axios.patch("/api/auth/avatar", formData, {
+        headers: {
+          Authorization: `Bearer ${token}`, 
+          "Content-Type": "multipart/form-data", 
+        },
+      });
+ return data;
     } catch (error) {
-      return rejectWithValue(error.response.data.message);
+      console.log("❌ Помилка в updateAvatar operation:", error.response?.data || error.message);
+      return rejectWithValue(error.response?.data?.message || error.message);
     }
   },
 );
