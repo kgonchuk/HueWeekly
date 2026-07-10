@@ -1,5 +1,7 @@
 import React from 'react';
 import { StyleSheet, View, Text, ScrollView, TouchableOpacity } from 'react-native';
+import * as ImageManipulator from 'expo-image-manipulator';
+
 
 
 
@@ -121,6 +123,44 @@ export default function WeekDatesList({ onDatePress }) {
     </View>
   );
 }
+
+
+export function getColorArtisticName(hslString) {
+  const matches = hslString.match(/\d+/);
+  if (!matches) return "MYSTUS COLOR";
+  
+  const hue = parseInt(matches[0], 10);
+
+  // 24 художні відтінки (кожні 15 градусів кола)
+  if (hue >= 0 && hue < 15)     return "BURNT SIENNA";     // Насичений теракот
+  if (hue >= 15 && hue < 30)    return "CHILI PEPPER";     // Вогняний червоно-помаранчевий
+  if (hue >= 30 && hue < 45)    return "DESERT CORAL";     // Ніжний кораловий
+  if (hue >= 45 && hue < 60)    return "AMBER GLOW";       // Янтарний
+  if (hue >= 60 && hue < 75)    return "SAFFRON GOLD";     // Шафрановий жовтий
+  if (hue >= 75 && hue < 90)    return "MATCHA LATTE";     // Світлий оливково-жовтий
+  if (hue >= 90 && hue < 105)   return "LIME SHADOW";      // Яскравий лайм
+  if (hue >= 105 && hue < 120)  return "PISTACHIO MIST";   // Ніжна фісташка
+  if (hue >= 120 && hue < 135)  return "EMERALD CRUSH";    // Смарагдовий
+  if (hue >= 135 && hue < 150)  return "FOREST WHISPER";   // Глибокий зелений
+  if (hue >= 150 && hue < 165)  return "MINT FRESCO";      // Освіжаюча м'ята
+  if (hue >= 165 && hue < 180)  return "SAGE GARDEN";      // Шавлієвий зелено-блакитний
+  if (hue >= 180 && hue < 195)  return "CYAN BREEZE";      // Морська хвиля
+  if (hue >= 195 && hue < 210)  return "GLACIER BLUE";     // Крижаний блакитний
+  if (hue >= 210 && hue < 225)  return "CELESTIAL SKY";    // Небесна лазур
+  if (hue >= 225 && hue < 240)  return "OCEAN DEPTHS";     // Глибокий синій
+  if (hue >= 240 && hue < 255)  return "MIDNIGHT INDIGO";  // Нічний індиго
+  if (hue >= 255 && hue < 270)  return "COSMIC IRIS";      // Насичений фіолетовий
+  if (hue >= 270 && hue < 285)  return "AMETHYST GLOW";    // Аметистовий
+  if (hue >= 285 && hue < 300)  return "WISTERIA BLOOM";   // Магічний бузковий
+  if (hue >= 300 && hue < 315)  return "ORCHID FANTASY";   // Орхідея
+  if (hue >= 315 && hue < 330)  return "MAGENTA VELVET";   // Оксамитова маджента
+  if (hue >= 330 && hue < 345)  return "ROSE QUARTZ";      // Рожевий кварц
+  return "CRIMSON HEART";                                  // Малиново-червоний (345-360)
+}
+
+
+
+
 
 const styles = StyleSheet.create({
   container: {

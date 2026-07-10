@@ -26,6 +26,7 @@ export const RegisterScreen = () => {
       .unwrap()
       .then(() => {
         Alert.alert("Успіх", "Реєстрація пройшла успішно!");
+        router.replace("/(tabs)/posts");
       })
       .catch((error) => {
         Alert.alert("Помилка", typeof error === "string" ? error : "Щось пішло не так");

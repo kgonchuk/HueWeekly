@@ -14,7 +14,7 @@ export const clearAuthHeader = () => {
   return {};
 };
 
-axios.defaults.baseURL = "http://192.168.0.108:5001";
+axios.defaults.baseURL = "http://192.168.0.173:5001";
 
 export const register = createAsyncThunk(
   "auth/register",

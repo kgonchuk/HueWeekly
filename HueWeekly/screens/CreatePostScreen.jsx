@@ -20,6 +20,7 @@ import { router } from "expo-router";
 import * as Location from "expo-location";
 import { useDispatch, useSelector } from "react-redux";
 import { createPost } from "../redux/post/postOperation";
+import { generateWeeklyColor, getColorArtisticName, getColors } from "../helpers/colorGenerator";
 
 const COLOR_OF_THE_DAY = {
   hex: "#C8541A",
@@ -61,31 +62,65 @@ export default function CreateScreen() {
   const dispatch = useDispatch();
   const [image, setImage] = useState(null);
   const [title, setTitle] = useState("");
-  const [location, setLocation] = useState("");
-  const [isPublic, setIsPublic] = useState(true);
    const [place, setPlace] = useState("");
 const [coords, setCoords] = useState({ latitude: 0, longitude: 0 });
 const token = useSelector((state) => state.auth.accessToken);
+const user = useSelector((state) => state.auth?.user);
+const userId= user?.id || user?._id || "guest";
+const weeklyColor= generateWeeklyColor(userId, new Date());
+const weeklyColorBg = weeklyColor.replace("hsl", "hsla").replace(")", ", 0.15)");
+const artisticName = getColorArtisticName(weeklyColor);
+const [detectedColors, setDetectedColors] = useState(null);
+  const [matchPercentage, setMatchPercentage] = useState(0);
 
+async function pickImage() {
+  const permissionResult = await ImagePicker.requestMediaLibraryPermissionsAsync();
+  if (permissionResult.granted === false) {
+    alert("Permission to access camera roll is required!");
+    return;
+  }
+  
+  const result = await ImagePicker.launchImageLibraryAsync({
+    mediaTypes: ImagePicker.MediaTypeOptions.Images,
+    allowsEditing: true,
+    aspect: [1, 1],
+    quality: 0.5,
+  });
 
+  if (!result.canceled && result.assets && result.assets[0]) {
+    const selectedUri = result.assets[0].uri;
+    setImage(selectedUri);
 
-  async function pickImage() {
-    const permissionResult = await ImagePicker.requestMediaLibraryPermissionsAsync();
-    if (permissionResult.granted === false) {
-      alert("Permission to access camera roll is required!");
-      return;
-    }
-    const result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ImagePicker.MediaTypeOptions.Images,
-      allowsEditing: true,
-      aspect: [1, 1],
-      quality: 0.8,
-    });
-    if (!result.canceled) {
-      setImage(result.assets[0].uri);
+    try {
+      const colors = await getColors(selectedUri);
+      setDetectedColors(colors);
+
+      // Якщо це безбарвний скріншот терміналу, текст чи біла плашка — ОДРАЗУ ставимо 0% або 1%
+      if (colors.isAchromatic) {
+        // Можна поставити 0 або 1 на твій розсуд (наприклад, 0%)
+        setMatchPercentage(0);
+        return; 
+      }
+
+      // Якщо картинка кольорова, рахуємо чесний відсоток збігу
+      const currentWeekMatches = weeklyColor.match(/\d+/g);
+      const currentWeekHue = currentWeekMatches ? parseInt(currentWeekMatches[0], 10) : 0;
+      const photoHue = colors.hue;
+
+      const diff = Math.abs(currentWeekHue - photoHue);
+      const distance = diff > 180 ? 360 - diff : diff;
+      
+      let percentage = Math.round(((180 - distance) / 180) * 100);
+
+      // Захист меж (не менше 2%, бо 0% і 1% ми зарезервували для скріншотів)
+      percentage = Math.max(2, Math.min(100, percentage));
+      setMatchPercentage(percentage);
+
+    } catch (err) {
+      console.error("❌ Помилка обробки кольору фото:", err);
     }
   }
-
+}
 const getLocation = async (placeName) => {
     try {
       if (placeName && placeName.trim() !== "") {
@@ -123,39 +158,58 @@ const getLocation = async (placeName) => {
   };
 
   const handlePublish = async () => {
-    if(!image){
-      Alert.alert("Будь ласка, додайте фото перед публікацією.");
-      return;
-    }
-    const postData = {
-      photo: image,
-      title: title,
-      place: place,
-      latitude: coords.latitude,
-      longitude: coords.longitude,
-      token: token,
-    };
-    dispatch(createPost(postData)); 
-    Alert.alert("Пост успішно створено!");
-    setImage(null);
-    setTitle("");
-    setPlace("");
-    setCoords({ latitude: 0, longitude: 0 });
-    router.push("/posts");
+  if (!image) {
+    Alert.alert("Будь ласка, додайте фото перед публікацією.");
+    return;
+  }
+
+  const postData = {
+    photo: image,
+    title: title,
+    place: place,
+    latitude: coords.latitude,
+    longitude: coords.longitude,
+    token: token,
   };
 
+  dispatch(createPost(postData))
+    .unwrap()
+    .then(() => {
+      Alert.alert("Успіх", "Пост успішно створено!");
+      setImage(null);
+      setTitle("");
+      setPlace("");
+      setCoords({ latitude: 0, longitude: 0 });
+  setDetectedColors(null);
+  setMatchPercentage(0);
+      router.push("/posts");
+    })
+    .catch((error) => {
+      console.error("❌ Помилка на фронтенді при публікації:", error);
+      Alert.alert("Помилка публікації", error);
+    });
+};
+
+
+const handleRemoveImage = () => {
+  setImage(null);
+  setDetectedColors(null);
+  setMatchPercentage(0);
+};
   return (
       <TouchableWithoutFeedback onPress={Keyboard.dismiss} accessible={false}>
     <SafeAreaView style={styles.safeArea}>
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollContent}>
     
         <View style={styles.badgeWrapper}>
-          <View style={styles.badgeContainer}>
-            <View style={[styles.badgeDot, { backgroundColor: COLOR_OF_THE_DAY.hex }]} />
-            <Text style={[styles.badgeText, { color: COLOR_OF_THE_DAY.hex }]}>
-              {COLOR_OF_THE_DAY.label} · {COLOR_OF_THE_DAY.name}
+          <View style={[
+      styles.badgeContainer,
+          { backgroundColor: weeklyColorBg, borderColor: weeklyColor }
+    ]}>
+            <View style={[styles.badgeDot, { backgroundColor: weeklyColor }]} />
+            <Text style={[styles.badgeText, { color: weeklyColor }]}>
+             WEEKLY COLOR · {artisticName}
             </Text>
-            <Text style={styles.colorHex}>{COLOR_OF_THE_DAY.hex.toUpperCase()}</Text>
           </View>
         </View>
 
@@ -163,8 +217,16 @@ const getLocation = async (placeName) => {
         <View style={styles.mediaContainer}>
           {image ? (
             <View style={styles.imagePreviewWrapper}>
+              <View style={[
+        styles.matchBadge, 
+        { backgroundColor: detectedColors?.primary || weeklyColor }
+      ]}>
+        <Text style={styles.matchBadgeText}>
+          🎯 Match Rate: {matchPercentage}%
+        </Text>
+      </View>
               <Image source={{ uri: image }} style={styles.previewImage} />
-              <TouchableOpacity style={styles.removeButton} onPress={() => setImage(null)}>
+              <TouchableOpacity style={styles.removeButton} onPress={handleRemoveImage}>
                 <Ionicons name="close" size={16} color="white" />
               </TouchableOpacity>
             </View>
@@ -189,6 +251,7 @@ const getLocation = async (placeName) => {
             <Text style={{ color: "red", marginTop: 8 }}>Видалити фото</Text>
           </TouchableOpacity>
         )}
+
 
         {/* Caption Input */}
         <View style={styles.inputSection}>
@@ -499,5 +562,32 @@ const styles = StyleSheet.create({
     fontWeight: "400",
     paddingVertical: 16,
     marginLeft: 8,
+  },
+ imagePreviewWrapper: {
+    position: 'relative',
+    alignItems: 'center',
+    width: '100%',
+  },
+  matchBadge: {
+    position: 'absolute',
+    top: -15, 
+    zIndex: 10,
+    paddingVertical: 6,
+    paddingHorizontal: 16,
+    borderRadius: 20,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.15,
+    shadowRadius: 6,
+    elevation: 4,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.3)',
+  },
+  matchBadgeText: {
+    color: '#FFFFFF',
+    fontWeight: '800',
+    fontSize: 13,
+    letterSpacing: 0.5,
+    textTransform: 'uppercase',
   },
 });

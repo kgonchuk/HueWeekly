@@ -4,23 +4,38 @@ import { useDispatch, useSelector } from 'react-redux';
 import { WeeklyColorView } from '../components/WeeklyColorView'; 
 import { selectAllPosts } from '../redux/post/postSelector';
 import { fetchPosts } from '../redux/post/postOperation';
+import { PostItem } from '../components/PostItem';
+import { generateWeeklyColor } from '../helpers/colorGenerator';
 
 export const PostScreen = () => {
    const dispatch = useDispatch();
   const user = useSelector((state) => state.auth.user);
-  const baseUrl= "http://192.168.0.108:5001";
- const avatarUrl = user.avatarUrl
+const avatarUrl = user?.avatarUrl || "https://via.placeholder.com/150";
    const token = useSelector((state) => state.auth.accessToken);
-  const allPosts = useSelector(selectAllPosts)
+  const allPosts = useSelector(selectAllPosts);
+  const userId = user?.id || user?._id || "guest";
+  const weeklyColor = generateWeeklyColor(userId, new Date());
+   const fallbackLetter = user?.displayname ? user.displayname[0].toUpperCase() : '?';
 
-  useEffect(()=>{
-    dispatch(fetchPosts(token))// Тут можна додати логіку для завантаження постів, якщо потрібно
-  }, [dispatch, token])
+
+ useEffect(() => {
+console.log("🔥 Стейт оновився, поточні пости:", allPosts);
+  dispatch(fetchPosts(token))
+    .unwrap()
+    .then((data) => {
+      console.log("🚀 УСПІХ! Пости прилетіли на фронтенд:", data);
+    })
+    .catch((err) => {
+      console.log("❌ КРИТИЧНА ПОМИЛКА ЗАПИТУ ПОСТІВ:", err);
+    });
+}, [dispatch, token]);
+
+   console.log("=== Всі пости ===", allPosts);
+   console.log("=== Аватар користувача ===", avatarUrl);
+
 
   return (
-   
-console.log("=== Всі пости ===", allPosts),
-console.log("=== Аватар користувача ===", avatarUrl),
+
     <View style={styles.container}>
       <FlatList
   data={allPosts}
@@ -29,8 +44,17 @@ console.log("=== Аватар користувача ===", avatarUrl),
   
   ListHeaderComponent={
     <View style={styles.headerContainer}>
+
+    
       <View style={styles.userContainer}>
-        <Image source={{ uri: avatarUrl }} style={styles.userPhoto} />
+
+            {user?.avatarUrl ? (
+          <Image source={{ uri: avatarUrl }} style={styles.userPhoto} />
+        ) : (
+           <View style={[styles.avatarFallback, { backgroundColor: weeklyColor }]}>
+                      <Text style={styles.avatarFallbackText}>{fallbackLetter}</Text>
+                    </View>
+        )}
         <View>
           <Text style={styles.userName}>{user.displayname}</Text>
           <Text style={styles.userEmail}>{user.email}</Text>
@@ -53,16 +77,22 @@ console.log("=== Аватар користувача ===", avatarUrl),
 };
 
 const styles = StyleSheet.create({
-     headerContainer: {
-    marginBottom: 32,
-  },
-  userContainer: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 8,
-  },
-   userPhoto: {
-    width: 60,
+    container: {
+      flex: 1,
+      backgroundColor: "hsl(25, 100%, 50%)",
+    },
+    headerContainer: {
+      marginBottom: 32,
+      marginTop: 16,
+paddingHorizontal: 16,
+    },
+    userContainer: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: 8,
+    },
+    userPhoto: {
+      width: 60,
     height: 60,
     borderRadius: 16,
   },
@@ -137,5 +167,17 @@ const styles = StyleSheet.create({
   emptyText: {
     color: '#9CA3AF',
     fontSize: 14,
+  },
+    avatarFallback: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  avatarFallbackText: {
+    color: '#FFFFFF',
+    fontWeight: '700',
+    fontSize: 16,
   },
 });

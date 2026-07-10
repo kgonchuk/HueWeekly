@@ -3,20 +3,24 @@ import React, { useState } from "react";
 import { StyleSheet, Text, View, SafeAreaView, Image, TouchableOpacity, Keyboard, TouchableWithoutFeedback, FlatList } from "react-native";
 import { useDispatch, useSelector } from "react-redux";
 import { Feather } from "@expo/vector-icons";
-import { generateWeeklyColor } from "../helpers/colorGenerator";
+import { generateWeeklyColor, getColorArtisticName } from "../helpers/colorGenerator";
 import { LinearGradient } from "expo-linear-gradient";
 import DeleteBtn from "../assets/images/add.png";
 import * as ImagePicker from "expo-image-picker";
 import { updateAvatar } from "../redux/auth/authOperation";
-import PostItem from '../components/PostItem';
+import {PostItem} from '../components/PostItem';
 import { selectPostsByAuthor } from "../redux/post/postSelector";
 
 export const ProfileScreen = () => {
   const dispatch = useDispatch();
   const user = useSelector((state) => state.auth?.user);
   const [avatar, setAvatar] = useState(null);
+  const userId= user?.id || user?._id || "guest";
+  const weeklyColor= generateWeeklyColor(userId, new Date());
+  const weeklyColorBg = weeklyColor.replace("hsl", "hsla").replace(")", ", 0.15)");
+  const artisticName = getColorArtisticName(weeklyColor);
 
-  const baseUrl = "http://192.168.0.108:5001";
+  const baseUrl = "http://192.168.0.178:5001";
   const todayHsl = user ? generateWeeklyColor(user._id || user.id, new Date()) : "hsl(25, 100%, 50%)";
   const darkerHsl = todayHsl.replace(/[\d.]%\)$/, (match) => {
     const currentLightness = parseFloat(match);
@@ -59,59 +63,72 @@ const displayAvatar = avatar
   const myPosts = useSelector((state) => selectPostsByAuthor(state, user._id || user.id));
 
   return (
-    <TouchableWithoutFeedback onPress={Keyboard.dismiss} accessible={false}>
-    <SafeAreaView style={styles.container}>
+
+    <View style={styles.container}>
       <FlatList
        data={myPosts}
        keyExtractor={(item) => item._id || item.id}
-        ListHeaderComponent={() => (
-           <View style={styles.heroContainer}>
-        <View style={styles.flexRow}>
-          <View style={styles.avatarWrapper}>
-            <LinearGradient
-              colors={todayGradient}
-              start={{ x: 0, y: 0 }}
-              end={{ x: 1, y: 1 }}
-              style={styles.gradientBorder}
-            >
-              <View style={styles.innerSpacing}>
-                {displayAvatar ? (
-                  <Image source={{ uri: displayAvatar }} style={styles.avatarImage} />
-                ) : (
-                  <View style={[styles.avatarImage, styles.userPhotoPlaceholder]} />
-                )}
-              </View>
-            </LinearGradient>
-            <TouchableOpacity 
-              style={[styles.badge, { backgroundColor: todayHsl }]} 
-              onPress={uploadPhoto}
-              activeOpacity={0.8}
-            >
-              {displayAvatar ? (
-                <Image source={DeleteBtn} style={styles.deleteplus} />
-              ) : (
-                <Feather name="plus" size={14} color="#FFFFFF" />
-              )}
-            </TouchableOpacity>
+      ListHeaderComponent={() => (
+  <View style={styles.heroContainer}>
+    <View style={styles.flexRow}>
+      <View style={styles.avatarWrapper}>
+        <LinearGradient
+          colors={todayGradient}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 1 }}
+          style={styles.gradientBorder}
+        >
+          <View style={styles.innerSpacing}>
+            {displayAvatar ? (
+              <Image source={{ uri: displayAvatar }} style={styles.avatarImage} />
+            ) : (
+              <View style={[styles.avatarImage, styles.userPhotoPlaceholder]} />
+            )}
           </View>
-          <View style={styles.contentWrapper}>
-            <Text style={styles.usernameText}>
-              {user?.displayname || "Aurora Chen"} 
-            </Text>
-            <Text style={styles.emailText}>{user?.email || "No email provided"}</Text>
-          </View>
+        </LinearGradient>
+        <TouchableOpacity 
+          style={[styles.badge, { backgroundColor: todayHsl }]} 
+          onPress={uploadPhoto}
+          activeOpacity={0.8}
+        >
+          {displayAvatar ? (
+            <Image source={DeleteBtn} style={styles.deleteplus} />
+          ) : (
+            <Feather name="plus" size={14} color="#FFFFFF" />
+          )}
+        </TouchableOpacity>
+      </View>
+      <View style={styles.contentWrapper}>
+        <Text style={[styles.usernameText, { color: weeklyColor }]}>
+          {user?.displayname || "Aurora Chen"}
+        </Text>
+        <Text style={[styles.emailText, { color: weeklyColor }]}>
+          {user?.email || "No email provided"}
+        </Text>
+      </View>
+    </View> 
+    <View style={styles.badgeWrapper}>
+      <View style={[
+        styles.badgeContainer,
+        { backgroundColor: weeklyColorBg, borderColor: weeklyColor, borderWidth: 1 }
+      ]}>
+        <View style={[styles.badgeDot, { backgroundColor: weeklyColor }]} />
+        <Text style={[styles.badgeText, { color: weeklyColor }]}>
+          YOUR WEEKLY COLOR · {artisticName}
+        </Text>
+      </View>
+    </View>
 
-        </View>
-      </View> 
-        )}
+  </View>
+)}
         renderItem={({ item }) => (
           <View style={styles.postItem}>
             <PostItem post={item}/>
           </View>
         )}
       />
-    </SafeAreaView>
-    </TouchableWithoutFeedback>
+    </View>
+
   );
 };
 
@@ -119,6 +136,7 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#FFFFFF',
+
   },
   heroContainer: {
     paddingHorizontal: 20, 
@@ -182,7 +200,8 @@ const styles = StyleSheet.create({
   },
   contentWrapper: {
     flex: 1,
-    marginLeft: 20,       
+    marginLeft: 20,  
+         
   },
   usernameText: {
     fontSize: 18,
@@ -193,5 +212,30 @@ const styles = StyleSheet.create({
   emailText: {
     fontSize: 14,
     color: '#6B7280',
-  }
+  },
+   badgeWrapper: {
+    flexDirection: "row",
+   justifyContent: "flex-start", 
+  marginTop: 16,
+  },
+  badgeContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 9999,
+    backgroundColor: "#fff0e8",
+  },
+  badgeDot: {
+    width: 10,
+    height: 10,
+    borderRadius: 5,
+  },
+  badgeText: {
+    fontSize: 12,
+    fontWeight: "600",
+    textTransform: "uppercase",
+    letterSpacing: 0.3,
+  },
 });

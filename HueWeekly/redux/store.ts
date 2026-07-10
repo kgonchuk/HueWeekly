@@ -29,7 +29,7 @@ const persistedReducer = persistReducer(persistConfig, authReducer);
 export const store = configureStore({
     reducer: {
         auth: persistedReducer,
-        post: postReducer,
+        posts: postReducer,
 
 
     },
