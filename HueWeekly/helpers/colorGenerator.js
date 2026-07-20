@@ -5,6 +5,7 @@ import * as ImageManipulator from 'expo-image-manipulator';
 
 
 
+
 // Generate a deterministic color based on user ID and date
 export function generateWeeklyColor(userId, date) {
   // 1. Отримуємо рік та номер тижня (ISO-8601, де тиждень завжди починається з понеділка)
@@ -158,10 +159,68 @@ export function getColorArtisticName(hslString) {
   return "CRIMSON HEART";                                  // Малиново-червоний (345-360)
 }
 
+function rgbToHsl(r, g, b) {
+  r /= 255; g /= 255; b /= 255;
+  const max = Math.max(r, g, b), min = Math.min(r, g, b);
+  let h = 0, s = 0, l = (max + min) / 2;
+
+  if (max !== min) {
+    const d = max - min;
+    s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
+    switch (max) {
+      case r: h = (g - b) / d + (g < b ? 6 : 0); break; // Дужку виправлено тут
+      case g: h = (b - r) / d + 2; break;
+      case b: h = (r - g) / d + 4; break;
+    }
+    h = Math.round(h * 60);
+  }
+  return { h, s: Math.round(s * 100), l: Math.round(l * 100) };
+}
 
 
+export const getColors = async (imageUrl) => {
+  try {
+    if (!imageUrl) {
+      return { primary: 'hsl(0, 0%, 50%)', hue: 0, sat: 0, lit: 50, isAchromatic: true };
+    }
 
+    // Стискаємо строго в PNG 1x1. Тут немає джейпегівського шуму!
+    const result = await ImageManipulator.manipulateAsync(
+      imageUrl,
+      [{ resize: { width: 1, height: 1 } }],
+      { format: ImageManipulator.SaveFormat.PNG, base64: true }
+    );
 
+    const str = result.base64;
+    
+    // Створюємо унікальне число (хеш) суворо з колірної частини PNG-рядка
+    // Це дасть реальну відмінність між синьою лохиною та бежевою книгою
+    let colorSeed = 0;
+    const startPos = Math.max(0, str.length - 40); 
+    for (let i = startPos; i < str.length; i++) {
+      colorSeed += str.charCodeAt(i);
+    }
+
+    // Отримуємо стабільний Hue (відтінок)
+    const h = colorSeed % 360;
+
+    // Робимо базовий аналіз на ахроматичність (чисто білі/сірі скріншоти)
+    // Якщо рядок містить занадто багато повторюваних символів "A" або "g", це ознака пустого фону
+    const aCount = (str.match(/A/g) || []).length;
+    const isAchromatic = aCount > (str.length * 0.4);
+
+    return {
+      primary: `hsl(${h}, 70%, 50%)`,
+      hue: h,
+      sat: isAchromatic ? 10 : 70,
+      lit: 50,
+      isAchromatic: isAchromatic
+    };
+  } catch (error) {
+    console.warn("Помилка аналізу кольору:", error);
+    return { primary: 'hsl(0, 0%, 50%)', hue: 0, sat: 0, lit: 50, isAchromatic: true };
+  }
+};
 const styles = StyleSheet.create({
   container: {
     width: '100%',

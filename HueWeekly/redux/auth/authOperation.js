@@ -14,7 +14,7 @@ export const clearAuthHeader = () => {
   return {};
 };
 
-axios.defaults.baseURL = "http://192.168.0.173:5001";
+axios.defaults.baseURL = "https://hueweekly-backend-ok9w.onrender.com";
 
 export const register = createAsyncThunk(
   "auth/register",

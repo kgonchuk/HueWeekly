@@ -2,7 +2,7 @@ import { createAsyncThunk } from "@reduxjs/toolkit";
 import axios, { create } from "axios";
 
 
-axios.defaults.baseURL =  "http://192.168.0.173:5001";
+axios.defaults.baseURL =  "https://hueweekly-backend-ok9w.onrender.com";
 
 export const createPost = createAsyncThunk(
   "posts/createPost", 

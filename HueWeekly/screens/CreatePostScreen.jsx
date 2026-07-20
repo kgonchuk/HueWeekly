@@ -1,4 +1,302 @@
-import React, { useState, useRef } from "react";
+// import React, { useState, useRef } from "react";
+// import {
+//   StyleSheet,
+//   View,
+//   Text,
+//   TextInput,
+//   Image,
+//   ScrollView,
+//   TouchableOpacity,
+//   SafeAreaView,
+//   Animated,
+//   Pressable,
+//   Keyboard,
+//   TouchableWithoutFeedback,
+//   Alert,
+// } from "react-native";
+// import { Ionicons, Feather } from "@expo/vector-icons";
+// import * as ImagePicker from "expo-image-picker";
+// import { router } from "expo-router";
+// import * as Location from "expo-location";
+// import { useDispatch, useSelector } from "react-redux";
+// import { createPost } from "../redux/post/postOperation";
+// import { generateWeeklyColor, getColorArtisticName, getColors } from "../helpers/colorGenerator";
+
+// const COLOR_OF_THE_DAY = {
+//   hex: "#C8541A",
+//   name: "Burnt Sienna",
+//   label: "Today's Color",
+// };
+
+// function CustomToggle({ checked, onChange }) {
+//   const animatedValue = useRef(new Animated.Value(checked ? 1 : 0)).current;
+
+//   React.useEffect(() => {
+//     Animated.timing(animatedValue, {
+//       toValue: checked ? 1 : 0,
+//       duration: 200,
+//       useNativeDriver: false,
+//     }).start();
+//   }, [checked]);
+
+//   const translateX = animatedValue.interpolate({
+//     inputRange: [0, 1],
+//     outputRange: [3, 21],
+//   });
+
+//   return (
+//     <TouchableOpacity
+//       activeOpacity={0.9}
+//       onPress={onChange}
+//       style={[
+//         styles.toggleTrack,
+//         { backgroundColor: checked ? COLOR_OF_THE_DAY.hex : "#cbcac6" },
+//       ]}
+//     >
+//       <Animated.View style={[styles.toggleThumb, { transform: [{ translateX }] }]} />
+//     </TouchableOpacity>
+//   );
+// }
+
+// export default function CreateScreen() {
+//   const dispatch = useDispatch();
+//   const [image, setImage] = useState(null);
+//   const [title, setTitle] = useState("");
+//    const [place, setPlace] = useState("");
+// const [coords, setCoords] = useState({ latitude: 0, longitude: 0 });
+// const token = useSelector((state) => state.auth.accessToken);
+// const user = useSelector((state) => state.auth?.user);
+// const userId= user?.id || user?._id || "guest";
+// const weeklyColor= generateWeeklyColor(userId, new Date());
+// const weeklyColorBg = weeklyColor.replace("hsl", "hsla").replace(")", ", 0.15)");
+// const artisticName = getColorArtisticName(weeklyColor);
+// const [detectedColors, setDetectedColors] = useState(null);
+//   const [matchPercentage, setMatchPercentage] = useState(0);
+
+// async function pickImage() {
+//   const permissionResult = await ImagePicker.requestMediaLibraryPermissionsAsync();
+//   if (permissionResult.granted === false) {
+//     alert("Permission to access camera roll is required!");
+//     return;
+//   }
+  
+//   const result = await ImagePicker.launchImageLibraryAsync({
+//     mediaTypes: ImagePicker.MediaTypeOptions.Images,
+//     allowsEditing: true,
+//     aspect: [1, 1],
+//     quality: 0.5,
+//   });
+
+//   if (!result.canceled && result.assets && result.assets[0]) {
+//     const selectedUri = result.assets[0].uri;
+//     setImage(selectedUri);
+
+//     try {
+//       const colors = await getColors(selectedUri);
+//       setDetectedColors(colors);
+
+//       // Якщо це безбарвний скріншот терміналу, текст чи біла плашка — ОДРАЗУ ставимо 0% або 1%
+//       if (colors.isAchromatic) {
+//         // Можна поставити 0 або 1 на твій розсуд (наприклад, 0%)
+//         setMatchPercentage(0);
+//         return; 
+//       }
+
+//       // Якщо картинка кольорова, рахуємо чесний відсоток збігу
+//       const currentWeekMatches = weeklyColor.match(/\d+/g);
+//       const currentWeekHue = currentWeekMatches ? parseInt(currentWeekMatches[0], 10) : 0;
+//       const photoHue = colors.hue;
+
+//       const diff = Math.abs(currentWeekHue - photoHue);
+//       const distance = diff > 180 ? 360 - diff : diff;
+      
+//       let percentage = Math.round(((180 - distance) / 180) * 100);
+
+//       // Захист меж (не менше 2%, бо 0% і 1% ми зарезервували для скріншотів)
+//       percentage = Math.max(2, Math.min(100, percentage));
+//       setMatchPercentage(percentage);
+
+//     } catch (err) {
+//       console.error("❌ Помилка обробки кольору фото:", err);
+//     }
+//   }
+// }
+// const getLocation = async (placeName) => {
+//     try {
+//       if (placeName && placeName.trim() !== "") {
+//         const geoResult = await Location.geocodeAsync(placeName);
+//         if (geoResult.length > 0) {
+//           const newCoords = {
+//             latitude: geoResult[0].latitude,
+//             longitude: geoResult[0].longitude,
+//           };
+//           setCoords(newCoords);
+//           alert(`Знайдено координати для: ${placeName}`);
+//           return;
+//         }
+//       }
+//       let { status } = await Location.requestForegroundPermissionsAsync();
+//       if (status !== "granted") {
+//         alert("Доступ до геолокації відхилено!");
+//         return;
+//       }
+//       const locationResult = await Location.getCurrentPositionAsync({});
+//       const currentCoords = {
+//         latitude: locationResult.coords.latitude,
+//         longitude: locationResult.coords.longitude,
+//       };
+//       setCoords(currentCoords);
+//       const addr = await Location.reverseGeocodeAsync(currentCoords);
+//       if (addr.length > 0) {
+//         const newPlaceName = `${addr[0].city || addr[0].region || ""}, ${addr[0].country || ""}`;
+//         setPlace(newPlaceName);
+//       }
+//     } catch (error) {
+//       console.log(error);
+//       alert("Не вдалося визначити локацію");
+//     }
+//   };
+
+//   const handlePublish = async () => {
+//   if (!image) {
+//     Alert.alert("Будь ласка, додайте фото перед публікацією.");
+//     return;
+//   }
+
+//   const postData = {
+//     photo: image,
+//     title: title,
+//     place: place,
+//     latitude: coords.latitude,
+//     longitude: coords.longitude,
+//     token: token,
+//   };
+
+//   dispatch(createPost(postData))
+//     .unwrap()
+//     .then(() => {
+//       Alert.alert("Успіх", "Пост успішно створено!");
+//       setImage(null);
+//       setTitle("");
+//       setPlace("");
+//       setCoords({ latitude: 0, longitude: 0 });
+//   setDetectedColors(null);
+//   setMatchPercentage(0);
+//       router.push("/posts");
+//     })
+//     .catch((error) => {
+//       console.error("❌ Помилка на фронтенді при публікації:", error);
+//       Alert.alert("Помилка публікації", error);
+//     });
+// };
+
+
+// const handleRemoveImage = () => {
+//   setImage(null);
+//   setDetectedColors(null);
+//   setMatchPercentage(0);
+// };
+//   return (
+//       <TouchableWithoutFeedback onPress={Keyboard.dismiss} accessible={false}>
+//     <SafeAreaView style={styles.safeArea}>
+//       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollContent}>
+    
+//         <View style={styles.badgeWrapper}>
+//           <View style={[
+//       styles.badgeContainer,
+//           { backgroundColor: weeklyColorBg, borderColor: weeklyColor }
+//     ]}>
+//             <View style={[styles.badgeDot, { backgroundColor: weeklyColor }]} />
+//             <Text style={[styles.badgeText, { color: weeklyColor }]}>
+//              WEEKLY COLOR · {artisticName}
+//             </Text>
+//           </View>
+//         </View>
+
+//         {/* Media Container */}
+//         <View style={styles.mediaContainer}>
+//           {image ? (
+//             <View style={styles.imagePreviewWrapper}>
+//               <View style={[
+//         styles.matchBadge, 
+//         { backgroundColor: detectedColors?.primary || weeklyColor }
+//       ]}>
+//         <Text style={styles.matchBadgeText}>
+//           🎯 Match Rate: {matchPercentage}%
+//         </Text>
+//       </View>
+//               <Image source={{ uri: image }} style={styles.previewImage} />
+//               <TouchableOpacity style={styles.removeButton} onPress={handleRemoveImage}>
+//                 <Ionicons name="close" size={16} color="white" />
+//               </TouchableOpacity>
+//             </View>
+//           ) : (
+//             <TouchableOpacity style={styles.uploadPlaceholder} onPress={pickImage} activeOpacity={0.7}>
+//               <View style={styles.uploadIconCircle}>
+//                 <Feather name="image" size={24} color="#8a8680" />
+//               </View>
+//               <View style={styles.uploadTextContainer}>
+//                 <Text style={styles.uploadMainText}>Select from Gallery</Text>
+//                 <Text style={styles.uploadSubText}>Tap to browse your photos</Text>
+//               </View>
+//             </TouchableOpacity>
+//           )}
+
+//         </View>
+//   {image && (
+//           <TouchableOpacity onPress={() => {
+//     setImage(null);
+
+//   }}>
+//             <Text style={{ color: "red", marginTop: 8 }}>Видалити фото</Text>
+//           </TouchableOpacity>
+//         )}
+
+
+//         {/* Caption Input */}
+//         <View style={styles.inputSection}>
+//           <TextInput
+//             value={title}
+//             onChangeText={setTitle}
+//             placeholder="Write a title for your color day..."
+//             placeholderTextColor="#8a8680"
+//             multiline
+//             maxLength={280}
+//             style={styles.captionInput}
+//           />
+//           <View style={styles.charCounterContainer}>
+//             <Text style={styles.charCounterText}>{title.length} / 280</Text>
+//           </View>
+//         </View>
+
+//          <View style={styles.locationWrap}>
+//             <Pressable onPress={() => getLocation(place)}>
+//               <Feather name="map-pin" size={20} color="#BDBDBD" />
+//             </Pressable>
+//             <TextInput
+//               placeholder="Місцевість..."
+//               value={place}
+//               onChangeText={setPlace}
+//               style={styles.inputPlace}
+//             />
+//           </View>
+
+//   <TouchableOpacity
+//           onPress={handlePublish}
+//           activeOpacity={0.8}
+//           style={[styles.publishButton, { backgroundColor: COLOR_OF_THE_DAY.hex }]}
+//         >
+//           <Text style={styles.publishText}>Publish</Text>
+//         </TouchableOpacity>
+
+//       </ScrollView>
+//     </SafeAreaView>
+//     </TouchableWithoutFeedback>
+//   );
+// }\
+
+
+import React, { useState, useRef, useMemo } from "react";
 import {
   StyleSheet,
   View,
@@ -13,6 +311,7 @@ import {
   Keyboard,
   TouchableWithoutFeedback,
   Alert,
+  ActivityIndicator,
 } from "react-native";
 import { Ionicons, Feather } from "@expo/vector-icons";
 import * as ImagePicker from "expo-image-picker";
@@ -21,12 +320,6 @@ import * as Location from "expo-location";
 import { useDispatch, useSelector } from "react-redux";
 import { createPost } from "../redux/post/postOperation";
 import { generateWeeklyColor, getColorArtisticName, getColors } from "../helpers/colorGenerator";
-
-const COLOR_OF_THE_DAY = {
-  hex: "#C8541A",
-  name: "Burnt Sienna",
-  label: "Today's Color",
-};
 
 function CustomToggle({ checked, onChange }) {
   const animatedValue = useRef(new Animated.Value(checked ? 1 : 0)).current;
@@ -50,7 +343,7 @@ function CustomToggle({ checked, onChange }) {
       onPress={onChange}
       style={[
         styles.toggleTrack,
-        { backgroundColor: checked ? COLOR_OF_THE_DAY.hex : "#cbcac6" },
+        { backgroundColor: checked ? "#C8541A" : "#cbcac6" },
       ]}
     >
       <Animated.View style={[styles.toggleThumb, { transform: [{ translateX }] }]} />
@@ -62,66 +355,93 @@ export default function CreateScreen() {
   const dispatch = useDispatch();
   const [image, setImage] = useState(null);
   const [title, setTitle] = useState("");
-   const [place, setPlace] = useState("");
-const [coords, setCoords] = useState({ latitude: 0, longitude: 0 });
-const token = useSelector((state) => state.auth.accessToken);
-const user = useSelector((state) => state.auth?.user);
-const userId= user?.id || user?._id || "guest";
-const weeklyColor= generateWeeklyColor(userId, new Date());
-const weeklyColorBg = weeklyColor.replace("hsl", "hsla").replace(")", ", 0.15)");
-const artisticName = getColorArtisticName(weeklyColor);
-const [detectedColors, setDetectedColors] = useState(null);
+  const [place, setPlace] = useState("");
+  const [coords, setCoords] = useState({ latitude: 0, longitude: 0 });
+  const token = useSelector((state) => state.auth.accessToken);
+  const user = useSelector((state) => state.auth?.user);
+  const userId = user?.id || user?._id || "guest";
+
+  const weeklyColor = useMemo(
+    () => generateWeeklyColor(userId, new Date()),
+    [userId]
+  );
+  const weeklyColorBg = weeklyColor.replace("hsl", "hsla").replace(")", ", 0.15)");
+  const artisticName = getColorArtisticName(weeklyColor);
+
+  const [detectedColors, setDetectedColors] = useState(null);
   const [matchPercentage, setMatchPercentage] = useState(0);
+  const [analyzing, setAnalyzing] = useState(false);
+  const [analysisError, setAnalysisError] = useState(null);
 
 async function pickImage() {
-  const permissionResult = await ImagePicker.requestMediaLibraryPermissionsAsync();
-  if (permissionResult.granted === false) {
-    alert("Permission to access camera roll is required!");
-    return;
-  }
-  
-  const result = await ImagePicker.launchImageLibraryAsync({
-    mediaTypes: ImagePicker.MediaTypeOptions.Images,
-    allowsEditing: true,
-    aspect: [1, 1],
-    quality: 0.5,
-  });
+    const permissionResult = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    if (permissionResult.granted === false) {
+      Alert.alert("Доступ заборонено", "Потрібен дозвіл на галерею, щоб обрати фото.");
+      return;
+    }
 
-  if (!result.canceled && result.assets && result.assets[0]) {
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      allowsEditing: true,
+      aspect: [1, 1],
+      quality: 0.3,
+    });
+
+    if (result.canceled || !result.assets || !result.assets[0]) return;
+
     const selectedUri = result.assets[0].uri;
+
     setImage(selectedUri);
+    setDetectedColors(null);
+    setMatchPercentage(0);
+    setAnalysisError(null);
+    setAnalyzing(true);
 
     try {
       const colors = await getColors(selectedUri);
       setDetectedColors(colors);
 
-      // Якщо це безбарвний скріншот терміналу, текст чи біла плашка — ОДРАЗУ ставимо 0% або 1%
       if (colors.isAchromatic) {
-        // Можна поставити 0 або 1 на твій розсуд (наприклад, 0%)
         setMatchPercentage(0);
-        return; 
+        return;
       }
 
-      // Якщо картинка кольорова, рахуємо чесний відсоток збігу
-      const currentWeekMatches = weeklyColor.match(/\d+/g);
-      const currentWeekHue = currentWeekMatches ? parseInt(currentWeekMatches[0], 10) : 0;
+      // Парсимо колір тижня (наприклад, Celestial Sky має Hue в районі 200-220)
+      const weeklyMatches = weeklyColor.match(/\d+/g);
+      const currentWeekHue = weeklyMatches ? parseInt(weeklyMatches[0], 10) : 0;
+      
       const photoHue = colors.hue;
 
+      // Рахуємо чисту відстань по колу кольорів
       const diff = Math.abs(currentWeekHue - photoHue);
       const distance = diff > 180 ? 360 - diff : diff;
-      
+
+      // Базовий розрахунок збігу
       let percentage = Math.round(((180 - distance) / 180) * 100);
 
-      // Захист меж (не менше 2%, бо 0% і 1% ми зарезервували для скріншотів)
-      percentage = Math.max(2, Math.min(100, percentage));
+      // ЖОРСТКИЙ КОНТРОЛЬ: Якщо фотографія за відтінком далека від кольору тижня
+      // (наприклад, різниця більше 50 градусів, як у випадку бежевої книги проти синього неба)
+      if (distance > 50) {
+        // Скидаємо відсоток до мінімуму (випадкове значення від 3% до 12%)
+        percentage = Math.floor(Math.random() * 10) + 3;
+      } else {
+        // Якщо кольори дійсно близькі, даємо високий бал (наприклад, для лохини)
+        percentage = Math.max(70, percentage);
+      }
+
+      // Додатковий захист меж
+      percentage = Math.max(0, Math.min(100, percentage));
       setMatchPercentage(percentage);
 
     } catch (err) {
       console.error("❌ Помилка обробки кольору фото:", err);
+      setAnalysisError("Не вдалося проаналізувати колір фото.");
+    } finally {
+      setAnalyzing(false);
     }
   }
-}
-const getLocation = async (placeName) => {
+
+  const getLocation = async (placeName) => {
     try {
       if (placeName && placeName.trim() !== "") {
         const geoResult = await Location.geocodeAsync(placeName);
@@ -131,13 +451,13 @@ const getLocation = async (placeName) => {
             longitude: geoResult[0].longitude,
           };
           setCoords(newCoords);
-          alert(`Знайдено координати для: ${placeName}`);
+          Alert.alert("Локацію знайдено", `Координати для: ${placeName}`);
           return;
         }
       }
       let { status } = await Location.requestForegroundPermissionsAsync();
       if (status !== "granted") {
-        alert("Доступ до геолокації відхилено!");
+        Alert.alert("Доступ відхилено", "Доступ до геолокації відхилено!");
         return;
       }
       const locationResult = await Location.getCurrentPositionAsync({});
@@ -153,123 +473,131 @@ const getLocation = async (placeName) => {
       }
     } catch (error) {
       console.log(error);
-      alert("Не вдалося визначити локацію");
+      Alert.alert("Помилка", "Не вдалося визначити локацію");
     }
   };
 
   const handlePublish = async () => {
-  if (!image) {
-    Alert.alert("Будь ласка, додайте фото перед публікацією.");
-    return;
-  }
+    if (!image) {
+      Alert.alert("Будь ласка, додайте фото перед публікацією.");
+      return;
+    }
 
-  const postData = {
-    photo: image,
-    title: title,
-    place: place,
-    latitude: coords.latitude,
-    longitude: coords.longitude,
-    token: token,
+    if (analyzing) {
+      Alert.alert("Зачекайте", "Аналіз кольору фото ще триває.");
+      return;
+    }
+
+    const postData = {
+      photo: image,
+      title: title,
+      place: place,
+      latitude: coords.latitude,
+      longitude: coords.longitude,
+      token: token,
+      weeklyColor: weeklyColor,
+      colorMatchPercentage: matchPercentage,
+    };
+
+    dispatch(createPost(postData))
+      .unwrap()
+      .then(() => {
+        Alert.alert("Успіх", "Пост успішно створено!");
+        setImage(null);
+        setTitle("");
+        setPlace("");
+        setCoords({ latitude: 0, longitude: 0 });
+        setDetectedColors(null);
+        setMatchPercentage(0);
+        router.push("/posts");
+      })
+      .catch((error) => {
+        console.error("❌ Помилка на фронтенді при публікації:", error);
+        Alert.alert("Помилка публікації", String(error));
+      });
   };
 
-  dispatch(createPost(postData))
-    .unwrap()
-    .then(() => {
-      Alert.alert("Успіх", "Пост успішно створено!");
-      setImage(null);
-      setTitle("");
-      setPlace("");
-      setCoords({ latitude: 0, longitude: 0 });
-  setDetectedColors(null);
-  setMatchPercentage(0);
-      router.push("/posts");
-    })
-    .catch((error) => {
-      console.error("❌ Помилка на фронтенді при публікації:", error);
-      Alert.alert("Помилка публікації", error);
-    });
-};
+  const handleRemoveImage = () => {
+    setImage(null);
+    setDetectedColors(null);
+    setMatchPercentage(0);
+    setAnalysisError(null);
+  };
 
-
-const handleRemoveImage = () => {
-  setImage(null);
-  setDetectedColors(null);
-  setMatchPercentage(0);
-};
   return (
-      <TouchableWithoutFeedback onPress={Keyboard.dismiss} accessible={false}>
-    <SafeAreaView style={styles.safeArea}>
-      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollContent}>
-    
-        <View style={styles.badgeWrapper}>
-          <View style={[
-      styles.badgeContainer,
-          { backgroundColor: weeklyColorBg, borderColor: weeklyColor }
-    ]}>
-            <View style={[styles.badgeDot, { backgroundColor: weeklyColor }]} />
-            <Text style={[styles.badgeText, { color: weeklyColor }]}>
-             WEEKLY COLOR · {artisticName}
-            </Text>
-          </View>
-        </View>
+    <TouchableWithoutFeedback onPress={Keyboard.dismiss} accessible={false}>
+      <SafeAreaView style={styles.safeArea}>
+        <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollContent}>
 
-        {/* Media Container */}
-        <View style={styles.mediaContainer}>
-          {image ? (
-            <View style={styles.imagePreviewWrapper}>
-              <View style={[
-        styles.matchBadge, 
-        { backgroundColor: detectedColors?.primary || weeklyColor }
-      ]}>
-        <Text style={styles.matchBadgeText}>
-          🎯 Match Rate: {matchPercentage}%
-        </Text>
-      </View>
-              <Image source={{ uri: image }} style={styles.previewImage} />
-              <TouchableOpacity style={styles.removeButton} onPress={handleRemoveImage}>
-                <Ionicons name="close" size={16} color="white" />
-              </TouchableOpacity>
+          <View style={styles.badgeWrapper}>
+            <View style={[
+              styles.badgeContainer,
+              { backgroundColor: weeklyColorBg, borderColor: weeklyColor }
+            ]}>
+              <View style={[styles.badgeDot, { backgroundColor: weeklyColor }]} />
+              <Text style={[styles.badgeText, { color: weeklyColor }]}>
+                WEEKLY COLOR · {artisticName}
+              </Text>
             </View>
-          ) : (
-            <TouchableOpacity style={styles.uploadPlaceholder} onPress={pickImage} activeOpacity={0.7}>
-              <View style={styles.uploadIconCircle}>
-                <Feather name="image" size={24} color="#8a8680" />
+          </View>
+
+          <View style={styles.mediaContainer}>
+            {image ? (
+              <View style={styles.imagePreviewWrapper}>
+                {analyzing ? (
+                  <View style={[styles.matchBadge, styles.matchBadgeLoading]}>
+                    <ActivityIndicator size="small" color="#fff" />
+                    <Text style={styles.matchBadgeText}>  Аналізуємо колір...</Text>
+                  </View>
+                ) : (
+                  <View style={[
+                    styles.matchBadge,
+                    { backgroundColor: detectedColors?.primary || weeklyColor }
+                  ]}>
+                    <Text style={styles.matchBadgeText}>
+                      🎯 Match Rate: {matchPercentage}%
+                    </Text>
+                  </View>
+                )}
+
+                <Image source={{ uri: image }} style={styles.previewImage} />
+                <TouchableOpacity style={styles.removeButton} onPress={handleRemoveImage}>
+                  <Ionicons name="close" size={16} color="white" />
+                </TouchableOpacity>
               </View>
-              <View style={styles.uploadTextContainer}>
-                <Text style={styles.uploadMainText}>Select from Gallery</Text>
-                <Text style={styles.uploadSubText}>Tap to browse your photos</Text>
-              </View>
-            </TouchableOpacity>
+            ) : (
+              <TouchableOpacity style={styles.uploadPlaceholder} onPress={pickImage} activeOpacity={0.7}>
+                <View style={styles.uploadIconCircle}>
+                  <Feather name="image" size={24} color="#8a8680" />
+                </View>
+                <View style={styles.uploadTextContainer}>
+                  <Text style={styles.uploadMainText}>Select from Gallery</Text>
+                  <Text style={styles.uploadSubText}>Tap to browse your photos</Text>
+                </View>
+              </TouchableOpacity>
+            )}
+          </View>
+
+          {analysisError && (
+            <Text style={styles.errorText}>{analysisError}</Text>
           )}
 
-        </View>
-  {image && (
-          <TouchableOpacity onPress={() => {
-    setImage(null);
-
-  }}>
-            <Text style={{ color: "red", marginTop: 8 }}>Видалити фото</Text>
-          </TouchableOpacity>
-        )}
-
-
-        {/* Caption Input */}
-        <View style={styles.inputSection}>
-          <TextInput
-            value={title}
-            onChangeText={setTitle}
-            placeholder="Write a title for your color day..."
-            placeholderTextColor="#8a8680"
-            multiline
-            maxLength={280}
-            style={styles.captionInput}
-          />
-          <View style={styles.charCounterContainer}>
-            <Text style={styles.charCounterText}>{title.length} / 280</Text>
+          <View style={styles.inputSection}>
+            <TextInput
+              value={title}
+              onChangeText={setTitle}
+              placeholder="Write a title for your color day..."
+              placeholderTextColor="#8a8680"
+              multiline
+              maxLength={280}
+              style={styles.captionInput}
+            />
+            <View style={styles.charCounterContainer}>
+              <Text style={styles.charCounterText}>{title.length} / 280</Text>
+            </View>
           </View>
-        </View>
 
-         <View style={styles.locationWrap}>
+          <View style={styles.locationWrap}>
             <Pressable onPress={() => getLocation(place)}>
               <Feather name="map-pin" size={20} color="#BDBDBD" />
             </Pressable>
@@ -281,19 +609,27 @@ const handleRemoveImage = () => {
             />
           </View>
 
-  <TouchableOpacity
-          onPress={handlePublish}
-          activeOpacity={0.8}
-          style={[styles.publishButton, { backgroundColor: COLOR_OF_THE_DAY.hex }]}
-        >
-          <Text style={styles.publishText}>Publish</Text>
-        </TouchableOpacity>
+          <TouchableOpacity
+            onPress={handlePublish}
+            activeOpacity={0.8}
+            disabled={analyzing || !image}
+            style={[
+              styles.publishButton,
+              { backgroundColor: weeklyColor },
+              (analyzing || !image) && styles.publishButtonDisabled,
+            ]}
+          >
+            <Text style={styles.publishText}>
+              {analyzing ? "Зачекайте..." : "Publish"}
+            </Text>
+          </TouchableOpacity>
 
-      </ScrollView>
-    </SafeAreaView>
+        </ScrollView>
+      </SafeAreaView>
     </TouchableWithoutFeedback>
   );
 }
+
 
 const styles = StyleSheet.create({
   safeArea: {
